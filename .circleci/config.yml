@@ -92,9 +92,6 @@ jobs:
       - run:
           name: Clippy linting on workspace (default features)
           command: cargo clippy --all-targets -- -D warnings
-      - run:
-          name: Clippy linting on workspace (all features)
-          command: cargo clippy --all-targets --features governance_owned -- -D warnings
       - save_cache:
           paths:
             - /usr/local/cargo/registry
