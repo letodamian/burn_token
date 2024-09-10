@@ -917,7 +917,7 @@ dependencies = [
 
 [[package]]
 name = "sink"
-version = "0.15.4"
+version = "0.20.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
