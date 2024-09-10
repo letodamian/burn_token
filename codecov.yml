@@ -1,5 +1,0 @@
-ignore:
-  - "contracts/**/examples/*"
-  - "contracts/**/tests/*"
-  - "packages/**/examples/*"
-  - "packages/**/tests/*"
