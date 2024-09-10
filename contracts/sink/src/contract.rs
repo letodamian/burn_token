@@ -1,6 +1,6 @@
 use cosmwasm_std::{
-    ensure_eq, entry_point, to_json_binary, BankMsg, CosmosMsg, Deps, DepsMut, Empty, Env,
-    MessageInfo, Order, QueryResponse, Response, StdResult,
+    entry_point, to_json_binary, BankMsg, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo, Order,
+    QueryResponse, Response, StdResult,
 };
 use cw2::set_contract_version;
 use cw_storage_plus::Bound;
@@ -8,9 +8,6 @@ use cw_storage_plus::Bound;
 use crate::error::ContractError;
 use crate::msg::{AshesResponse, ExecuteMsg, InstantiateMsg, QueriedAsh, QueryMsg};
 use crate::state::{Ash, ASHES, ASHES_LAST_ID};
-
-/// Constant defining the denom of the Coin to be burnt
-const BURN_DENOM: &str = "unois";
 
 #[entry_point]
 pub fn instantiate(
@@ -46,7 +43,7 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Burn {} => execute_burn(deps, info, env),
-        ExecuteMsg::BurnBalance {} => execute_burn_balance(deps, info, env),
+        ExecuteMsg::BurnBalance { denom } => execute_burn_balance(deps, info, env, denom),
     }
 }
 
@@ -69,13 +66,11 @@ fn execute_burn(deps: DepsMut, info: MessageInfo, env: Env) -> Result<Response, 
         sender: burner,
     } = info;
 
-    if funds.len() > 1 {
-        return Err(ContractError::TooManyCoins);
-    }
-
-    // Get first coin and ensure it has the correct denom
-    let amount = funds.pop().ok_or(ContractError::NoCoins)?;
-    ensure_eq!(amount.denom, BURN_DENOM, ContractError::WrongDenom);
+    let amount = match funds.len() {
+        0 => return Err(ContractError::NoCoins),
+        1 => funds.pop().unwrap(),
+        _ => return Err(ContractError::TooManyCoins),
+    };
 
     let new_id = ASHES_LAST_ID.may_load(deps.storage)?.unwrap_or_default() + 1;
     ASHES_LAST_ID.save(deps.storage, &new_id)?;
@@ -108,13 +103,12 @@ fn execute_burn_balance(
     deps: DepsMut,
     info: MessageInfo,
     env: Env,
+    denom: String,
 ) -> Result<Response, ContractError> {
     if !info.funds.is_empty() {
         return Err(ContractError::NonPayableMessage);
     }
-    let contract_balance = deps
-        .querier
-        .query_balance(&env.contract.address, BURN_DENOM)?;
+    let contract_balance = deps.querier.query_balance(&env.contract.address, denom)?;
 
     if contract_balance.amount.is_zero() {
         return Err(ContractError::NoFundsToBurn);
@@ -211,9 +205,7 @@ mod tests {
         instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
 
         let msg = ExecuteMsg::Burn {};
-        let info = message_info(&creator, &[coin(1_000, "bitcoin".to_string())]);
-        let err = execute(deps.as_mut(), mock_env(), info, msg.clone()).unwrap_err();
-        assert_eq!(err, ContractError::WrongDenom);
+
         let info = message_info(
             &creator,
             &[
@@ -223,9 +215,11 @@ mod tests {
         );
         let err = execute(deps.as_mut(), mock_env(), info, msg.clone()).unwrap_err();
         assert_eq!(err, ContractError::TooManyCoins);
+
         let info = message_info(&creator, &[]);
         let err = execute(deps.as_mut(), mock_env(), info, msg.clone()).unwrap_err();
         assert_eq!(err, ContractError::NoCoins);
+
         let info = message_info(&burner1, &[coin(1_000, "unois".to_string())]);
         let resp = execute(deps.as_mut(), env.clone(), info, msg.clone()).unwrap();
         assert_eq!(
@@ -349,7 +343,9 @@ mod tests {
         let env = mock_env();
         instantiate(deps.as_mut(), env.to_owned(), info, msg).unwrap();
 
-        let msg = ExecuteMsg::BurnBalance {};
+        let msg = ExecuteMsg::BurnBalance {
+            denom: "unois".to_string(),
+        };
         let info = message_info(&creator, &[coin(1_000, "unois".to_string())]);
         let err = execute(deps.as_mut(), mock_env(), info, msg.clone()).unwrap_err();
         assert_eq!(err, ContractError::NonPayableMessage);

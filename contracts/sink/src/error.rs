@@ -8,9 +8,6 @@ pub enum ContractError {
     #[error("{0}")]
     Std(#[from] StdError),
 
-    #[error("Wrong coin denom")]
-    WrongDenom,
-
     #[error("Too many coins sent")]
     TooManyCoins,
 

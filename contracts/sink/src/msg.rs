@@ -8,11 +8,12 @@ pub struct InstantiateMsg {}
 
 #[cw_serde]
 pub enum ExecuteMsg {
-    /// Burns the tokens that are sent as `funds` with this message
+    /// Burns the tokens that are sent as `funds` with this message.
+    /// Only one denom is supported per message, i.e. the funds array needs to have exactly one entry.
     Burn {},
-    /// Burns all unois owned by the contract. This can be used
+    /// Burns all tokens of the given denom owned by the contract. This can be used
     /// if tokens were sent here using bank sends.
-    BurnBalance {},
+    BurnBalance { denom: String },
 }
 
 #[cw_serde]
