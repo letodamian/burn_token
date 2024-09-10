@@ -28,5 +28,4 @@ tests/internal
 # code coverage
 tarpaulin-report.*
 
-packages/*/schema
 contracts/*/schema

@@ -11,4 +11,4 @@ while getopts c option; do
   esac
 done
 
-shfmt -$op devtools packages
+shfmt -$op devtools
