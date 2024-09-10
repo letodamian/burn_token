@@ -330,7 +330,7 @@ mod tests {
     }
 
     #[test]
-    fn burn_native_works() {
+    fn burn_balance_works() {
         let mut deps = mock_dependencies();
 
         let creator = deps.api.addr_make("creator");
@@ -353,8 +353,8 @@ mod tests {
         let info = message_info(&creator, &[]);
         let err = execute(deps.as_mut(), mock_env(), info, msg.to_owned()).unwrap_err();
         assert_eq!(err, ContractError::NoFundsToBurn);
-        let contract = env.contract.address;
 
+        let contract = env.contract.address;
         deps.querier.bank.update_balance(
             contract.to_owned(),
             vec![Coin {
