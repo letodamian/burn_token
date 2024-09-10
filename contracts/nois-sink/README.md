@@ -1,3 +1,3 @@
-# Nois Sink
+# Sink
 
-Nois-sink is a contract that burns NOIS native coins.
+sink is a contract that burns native coins.

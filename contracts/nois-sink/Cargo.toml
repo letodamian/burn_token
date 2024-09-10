@@ -1,5 +1,5 @@
 [package]
-name = "nois-sink"
+name = "sink"
 version = "0.15.4"
 authors = []
 edition = "2021"

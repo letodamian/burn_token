@@ -7,7 +7,7 @@ workflows:
   version: 2
   test:
     jobs:
-      - contract_nois_sink
+      - contract_sink
       - lint
       - wasm_build
       - check-wasm:
@@ -29,10 +29,10 @@ workflows:
              ignore: /.*/
 
 jobs:
-  contract_nois_sink:
+  contract_sink:
     docker:
       - image: rust:1.75.0
-    working_directory: ~/project/contracts/nois-sink
+    working_directory: ~/project/contracts/sink
     steps:
       - checkout:
           path: ~/project
@@ -41,8 +41,8 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - v2-contract_nois_sink-rust:1.75.0-{{ checksum "~/project/Cargo.lock" }}
-            - v2-contract_nois_sink-rust:1.75.0-
+            - v2-contract_sink-rust:1.75.0-{{ checksum "~/project/Cargo.lock" }}
+            - v2-contract_sink-rust:1.75.0-
       - run:
           name: Unit Tests
           environment:
@@ -57,16 +57,7 @@ jobs:
             - ~/project/target/debug/.fingerprint
             - ~/project/target/debug/build
             - ~/project/target/debug/deps
-          key: v2-contract_nois_sink-rust:1.75.0-{{ checksum "~/project/Cargo.lock" }}
-
-  cw-multitest:
-    docker:
-      - image: rust:1.75.0
-    working_directory: ~/project/packages/multitest
-    steps:
-      - checkout:
-          path: ~/project
-      - run: cargo test --locked
+          key: v2-contract_sink-rust:1.75.0-{{ checksum "~/project/Cargo.lock" }}
 
   lint:
     docker:
@@ -155,7 +146,7 @@ jobs:
           name: Save wasm contracts for integration test usage
           root: ./wasm-out
           paths:
-            - nois_sink.wasm
+            - sink.wasm
 
   check-wasm:
     docker:
