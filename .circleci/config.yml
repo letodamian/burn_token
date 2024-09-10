@@ -1,39 +1,15 @@
 version: 2.1
 
-orbs:
-  codecov: codecov/codecov@3.2.4
-
 workflows:
   version: 2
   test:
     jobs:
-      - contract_nois_demo
-      - contract_nois_drand
-      - contract_nois_gateway
-      - contract_nois_icecube
-      - contract_nois_sink
-      - contract_nois_payment
-      - contract_nois_proxy
-      - contract_nois_proxy_governance_owned
-      - contract_nois_monitoring
-      - coverage
-      - cw-multitest
-      - package_nois_protocol
+      - contract_sink
       - lint
       - wasm_build
-      - ts-build
       - check-wasm:
           requires:
             - wasm_build
-      - integration:
-          requires:
-            - wasm_build
-            - ts-build
-            - contract_nois_demo
-            - contract_nois_gateway
-            - contract_nois_icecube
-            - contract_nois_proxy
-            - contract_nois_monitoring
   deploy:
     jobs:
       - build_and_upload_contracts:
@@ -50,10 +26,10 @@ workflows:
              ignore: /.*/
 
 jobs:
-  contract_nois_demo:
+  contract_sink:
     docker:
-      - image: rust:1.75.0
-    working_directory: ~/project/contracts/nois-demo
+      - image: rust:1.81.0
+    working_directory: ~/project/contracts/sink
     steps:
       - checkout:
           path: ~/project
@@ -62,8 +38,8 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - v2-contract_nois_demo-rust:1.75.0-{{ checksum "~/project/Cargo.lock" }}
-            - v2-contract_nois_demo-rust:1.75.0-
+            - v2-contract_sink-rust:1.81.0-{{ checksum "~/project/Cargo.lock" }}
+            - v2-contract_sink-rust:1.81.0-
       - run:
           name: Unit Tests
           environment:
@@ -78,351 +54,11 @@ jobs:
             - ~/project/target/debug/.fingerprint
             - ~/project/target/debug/build
             - ~/project/target/debug/deps
-          key: v2-contract_nois_demo-rust:1.75.0-{{ checksum "~/project/Cargo.lock" }}
-
-  contract_nois_proxy:
-    docker:
-      - image: rust:1.75.0
-    working_directory: ~/project/contracts/nois-proxy
-    steps:
-      - checkout:
-          path: ~/project
-      - run:
-          name: Version information
-          command: rustc --version; cargo --version; rustup --version
-      - restore_cache:
-          keys:
-            - v2-contract_nois_proxy-rust:1.75.0-{{ checksum "~/project/Cargo.lock" }}
-            - v2-contract_nois_proxy-rust:1.75.0-
-      - run:
-          name: Unit Tests (default features)
-          environment:
-            RUST_BACKTRACE: 1
-          command: cargo unit-test --locked
-      - run:
-          name: Unit Tests (all features)
-          environment:
-            RUST_BACKTRACE: 1
-          command: cargo unit-test --locked --features governance_owned
-      - run:
-          name: Build and run schema generator
-          command: cargo schema --locked
-      - save_cache:
-          paths:
-            - /usr/local/cargo/registry
-            - ~/project/target/debug/.fingerprint
-            - ~/project/target/debug/build
-            - ~/project/target/debug/deps
-          key: v2-contract_nois_proxy-rust:1.75.0-{{ checksum "~/project/Cargo.lock" }}
-
-  contract_nois_proxy_governance_owned:
-    docker:
-      - image: rust:1.75.0
-    working_directory: ~/project/contracts/nois-proxy-governance-owned
-    steps:
-      - checkout:
-          path: ~/project
-      - run:
-          name: Version information
-          command: rustc --version; cargo --version; rustup --version
-      - restore_cache:
-          keys:
-            - v2-contract_nois_proxy_governance_owned-rust:1.75.0-{{ checksum "~/project/Cargo.lock" }}
-            - v2-contract_nois_proxy_governance_owned-rust:1.75.0-
-      - run:
-          name: Unit Tests
-          environment:
-            RUST_BACKTRACE: 1
-          command: cargo unit-test --locked
-      - run:
-          name: Build and run schema generator
-          command: cargo schema --locked
-      - save_cache:
-          paths:
-            - /usr/local/cargo/registry
-            - ~/project/target/debug/.fingerprint
-            - ~/project/target/debug/build
-            - ~/project/target/debug/deps
-          key: v2-contract_nois_proxy_governance_owned-rust:1.75.0-{{ checksum "~/project/Cargo.lock" }}
-
-  contract_nois_monitoring:
-    docker:
-      - image: rust:1.75.0
-    working_directory: ~/project/contracts/nois-monitoring
-    steps:
-      - checkout:
-          path: ~/project
-      - run:
-          name: Version information
-          command: rustc --version; cargo --version; rustup --version
-      - restore_cache:
-          keys:
-            - v2-contract_nois_monitoring-rust:1.75.0-{{ checksum "~/project/Cargo.lock" }}
-            - v2-contract_nois_monitoring-rust:1.75.0-
-      - run:
-          name: Unit Tests
-          environment:
-            RUST_BACKTRACE: 1
-          command: cargo unit-test --locked
-      - run:
-          name: Build and run schema generator
-          command: cargo schema --locked
-      - save_cache:
-          paths:
-            - /usr/local/cargo/registry
-            - ~/project/target/debug/.fingerprint
-            - ~/project/target/debug/build
-            - ~/project/target/debug/deps
-          key: v2-contract_nois_monitoring-rust:1.75.0-{{ checksum "~/project/Cargo.lock" }}
-
-  contract_nois_sink:
-    docker:
-      - image: rust:1.75.0
-    working_directory: ~/project/contracts/nois-sink
-    steps:
-      - checkout:
-          path: ~/project
-      - run:
-          name: Version information
-          command: rustc --version; cargo --version; rustup --version
-      - restore_cache:
-          keys:
-            - v2-contract_nois_sink-rust:1.75.0-{{ checksum "~/project/Cargo.lock" }}
-            - v2-contract_nois_sink-rust:1.75.0-
-      - run:
-          name: Unit Tests
-          environment:
-            RUST_BACKTRACE: 1
-          command: cargo unit-test --locked
-      - run:
-          name: Build and run schema generator
-          command: cargo schema --locked
-      - save_cache:
-          paths:
-            - /usr/local/cargo/registry
-            - ~/project/target/debug/.fingerprint
-            - ~/project/target/debug/build
-            - ~/project/target/debug/deps
-          key: v2-contract_nois_sink-rust:1.75.0-{{ checksum "~/project/Cargo.lock" }}
-
-  contract_nois_payment:
-    docker:
-      - image: rust:1.75.0
-    working_directory: ~/project/contracts/nois-sink
-    steps:
-      - checkout:
-          path: ~/project
-      - run:
-          name: Version information
-          command: rustc --version; cargo --version; rustup --version
-      - restore_cache:
-          keys:
-            - v2-contract_nois_payment-rust:1.75.0-{{ checksum "~/project/Cargo.lock" }}
-            - v2-contract_nois_payment-rust:1.75.0-
-      - run:
-          name: Unit Tests
-          environment:
-            RUST_BACKTRACE: 1
-          command: cargo unit-test --locked
-      - run:
-          name: Build and run schema generator
-          command: cargo schema --locked
-      - save_cache:
-          paths:
-            - /usr/local/cargo/registry
-            - ~/project/target/debug/.fingerprint
-            - ~/project/target/debug/build
-            - ~/project/target/debug/deps
-          key: v2-contract_nois_payment-rust:1.75.0-{{ checksum "~/project/Cargo.lock" }}
-
-  contract_nois_gateway:
-    docker:
-      - image: rust:1.75.0
-    working_directory: ~/project/contracts/nois-gateway
-    steps:
-      - checkout:
-          path: ~/project
-      - run:
-          name: Version information
-          command: rustc --version; cargo --version; rustup --version
-      - restore_cache:
-          keys:
-            - v2-contract_nois_gateway-rust:1.75.0-{{ checksum "~/project/Cargo.lock" }}
-            - v2-contract_nois_gateway-rust:1.75.0-
-      - run:
-          name: Unit Tests
-          environment:
-            RUST_BACKTRACE: 1
-          command: cargo unit-test --locked
-      - run:
-          name: Build and run schema generator
-          command: cargo schema --locked
-      - save_cache:
-          paths:
-            - /usr/local/cargo/registry
-            - ~/project/target/debug/.fingerprint
-            - ~/project/target/debug/build
-            - ~/project/target/debug/deps
-          key: v2-contract_nois_gateway-rust:1.75.0-{{ checksum "~/project/Cargo.lock" }}
-
-  contract_nois_drand:
-    docker:
-      - image: rust:1.75.0
-    working_directory: ~/project/contracts/nois-drand
-    steps:
-      - checkout:
-          path: ~/project
-      - run:
-          name: Version information
-          command: rustc --version; cargo --version; rustup --version
-      - restore_cache:
-          keys:
-            - v2-contract_nois_drand-rust:1.75.0-{{ checksum "~/project/Cargo.lock" }}
-            - v2-contract_nois_drand-rust:1.75.0-
-      - run:
-          name: Unit Tests
-          environment:
-            RUST_BACKTRACE: 1
-          command: cargo unit-test --locked
-      - run:
-          name: Build and run schema generator
-          command: cargo schema --locked
-      - save_cache:
-          paths:
-            - /usr/local/cargo/registry
-            - ~/project/target/debug/.fingerprint
-            - ~/project/target/debug/build
-            - ~/project/target/debug/deps
-          key: v2-contract_nois_drand-rust:1.75.0-{{ checksum "~/project/Cargo.lock" }}
-
-  contract_nois_icecube:
-    docker:
-      - image: rust:1.75.0
-    working_directory: ~/project/contracts/nois-icecube
-    steps:
-      - checkout:
-          path: ~/project
-      - run:
-          name: Version information
-          command: rustc --version; cargo --version; rustup --version
-      - restore_cache:
-          keys:
-            - v2-contract_nois_icecube-rust:1.75.0-{{ checksum "~/project/Cargo.lock" }}
-            - v2-contract_nois_icecube-rust:1.75.0-
-      - run:
-          name: Unit Tests
-          environment:
-            RUST_BACKTRACE: 1
-          command: cargo unit-test --locked
-      - run:
-          name: Build and run schema generator
-          command: cargo schema --locked
-      - save_cache:
-          paths:
-            - /usr/local/cargo/registry
-            - ~/project/target/debug/.fingerprint
-            - ~/project/target/debug/build
-            - ~/project/target/debug/deps
-          key: v2-contract_nois_icecube-rust:1.75.0-{{ checksum "~/project/Cargo.lock" }}
-
-  coverage:
-    docker:
-      - image: rust:1.75.0
-    steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - v2-coverage-rust:1.75.0-{{ checksum "~/project/Cargo.lock" }}
-            - v2-coverage-rust:1.75.0-
-      - run:
-          name: Install dependencies
-          command: |
-            rustup component add llvm-tools-preview
-            cargo install grcov
-      - run:
-          name: Run tests with gcov coverage
-          command: |
-            export RUSTFLAGS="-Cinstrument-coverage"
-            cargo build
-            export LLVM_PROFILE_FILE="nois_coverage-%p-%m.profraw"
-            cargo test
-      - run:
-          name: Aggregate coverage data
-          command: |
-            mkdir -p reports
-            function grcov_contract() {
-              grcov . -s contracts/$1/src \
-                --binary-path ./target/debug/ \
-                --excl-start '^(pub(\((crate|super)\))? )?mod tests' \
-                --excl-stop '^}' \
-                -t lcov --llvm --branch --ignore-not-existing \
-                -o ./reports/$1.info
-            }
-
-            grcov_contract nois-drand
-            grcov_contract nois-gateway
-            grcov_contract nois-icecube
-            grcov_contract nois-sink
-      - codecov/upload:
-          file: reports/nois-drand.info
-          flags: nois-drand
-      - codecov/upload:
-          file: reports/nois-gateway.info
-          flags: nois-gateway
-      - codecov/upload:
-          file: reports/nois-icecube.info
-          flags: nois-icecube
-      - codecov/upload:
-          file: reports/nois-sink.info
-          flags: nois-sink
-      - save_cache:
-          paths:
-            - /usr/local/cargo/registry
-            - ~/project/target/debug/.fingerprint
-            - ~/project/target/debug/build
-            - ~/project/target/debug/deps
-          key: v2-coverage-rust:1.75.0-{{ checksum "~/project/Cargo.lock" }}
-
-  cw-multitest:
-    docker:
-      - image: rust:1.75.0
-    working_directory: ~/project/packages/multitest
-    steps:
-      - checkout:
-          path: ~/project
-      - run: cargo test --locked
-
-  package_nois_protocol:
-    docker:
-      - image: rust:1.75.0
-    working_directory: ~/project/packages/nois-protocol
-    steps:
-      - checkout:
-          path: ~/project
-      - run:
-          name: Version information
-          command: rustc --version; cargo --version; rustup --version; rustup target list --installed
-      - restore_cache:
-          keys:
-            - v2-package_nois_protocol-rust:1.75.0-{{ checksum "~/project/Cargo.lock" }}
-            - v2-package_nois_protocol-rust:1.75.0-
-      - run:
-          name: Build library for native target
-          command: cargo build --locked
-      - run:
-          name: Run unit tests
-          command: cargo test --locked
-      - save_cache:
-          paths:
-            - /usr/local/cargo/registry
-            - ~/project/target/debug/.fingerprint
-            - ~/project/target/debug/build
-            - ~/project/target/debug/deps
-          key: v2-package_nois_protocol-rust:1.75.0-{{ checksum "~/project/Cargo.lock" }}
+          key: v2-contract_sink-rust:1.81.0-{{ checksum "~/project/Cargo.lock" }}
 
   lint:
     docker:
-      - image: rust:1.75.0
+      - image: rust:1.81.0
     steps:
       - checkout
       - run:
@@ -430,8 +66,8 @@ jobs:
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - v2-lint-rust:1.75.0-{{ checksum "Cargo.lock" }}
-            - v2-lint-rust:1.75.0-
+            - v2-lint-rust:1.81.0-{{ checksum "Cargo.lock" }}
+            - v2-lint-rust:1.81.0-
       - run:
           name: Add rustfmt component
           command: rustup component add rustfmt
@@ -444,16 +80,13 @@ jobs:
       - run:
           name: Clippy linting on workspace (default features)
           command: cargo clippy --all-targets -- -D warnings
-      - run:
-          name: Clippy linting on workspace (all features)
-          command: cargo clippy --all-targets --features governance_owned -- -D warnings
       - save_cache:
           paths:
             - /usr/local/cargo/registry
             - ~/project/target/debug/.fingerprint
             - ~/project/target/debug/build
             - ~/project/target/debug/deps
-          key: v2-lint-rust:1.75.0-{{ checksum "Cargo.lock" }}
+          key: v2-lint-rust:1.81.0-{{ checksum "Cargo.lock" }}
 
   # This runs one time on the top level to ensure all contracts compile properly into wasm.
   # We don't run the wasm build per contract build, and then reuse a lot of the same dependencies, so this speeds up CI time
@@ -461,7 +94,7 @@ jobs:
   # Resulting wasm files are stored to the workspace, so they can be used by the integration test downstream
   wasm_build:
     docker:
-      - image: rust:1.75.0
+      - image: rust:1.81.0
     steps:
       - checkout:
           path: ~/project
@@ -470,8 +103,8 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - v2-wasm_build-rust:1.75.0-{{ checksum "~/project/Cargo.lock" }}
-            - v2-wasm_build-rust:1.75.0-
+            - v2-wasm_build-rust:1.81.0-{{ checksum "~/project/Cargo.lock" }}
+            - v2-wasm_build-rust:1.81.0-
       - run:
           name: Add wasm32 target
           command: rustup target add wasm32-unknown-unknown
@@ -505,23 +138,16 @@ jobs:
           paths:
             - /usr/local/cargo/registry
             - ~/project/target
-          key: v2-wasm_build-rust:1.75.0-{{ checksum "~/project/Cargo.lock" }}
+          key: v2-wasm_build-rust:1.81.0-{{ checksum "~/project/Cargo.lock" }}
       - persist_to_workspace:
           name: Save wasm contracts for integration test usage
           root: ./wasm-out
           paths:
-            - nois_demo.wasm
-            - nois_drand.wasm
-            - nois_icecube.wasm
-            - nois_proxy.wasm
-            - nois_proxy_governance_owned.wasm
-            - nois_gateway.wasm
-            - nois_sink.wasm
-            - nois_payment.wasm
+            - sink.wasm
 
   check-wasm:
     docker:
-      - image: rust:1.75.0
+      - image: rust:1.81.0
     environment:
       CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
     steps:
@@ -534,8 +160,8 @@ jobs:
           at: wasms
       - restore_cache:
           keys:
-            - v2-check-wasm-rust:1.75.0-{{ checksum "~/project/Cargo.lock" }}
-            - v2-check-wasm-rust:1.75.0-
+            - v2-check-wasm-rust:1.81.0-{{ checksum "~/project/Cargo.lock" }}
+            - v2-check-wasm-rust:1.81.0-
       - run:
           name: Install cosmwasm-check
           command: cargo install --debug cosmwasm-check
@@ -547,98 +173,7 @@ jobs:
           paths:
             - /usr/local/cargo/registry
             - ~/project/target
-          key: v2-check-wasm-rust:1.75.0-{{ checksum "~/project/Cargo.lock" }}
-
-  ts-build:
-    docker:
-      - image: cimg/node:18.18
-    working_directory: ~/ibc/tests
-    steps:
-      - checkout:
-          path: ~/ibc
-      - restore_cache:
-          keys:
-            - v1-dependencies-{{ checksum "package-lock.json" }}
-      - run: npm install --frozen-lockfile
-      - save_cache:
-          paths:
-            - node_modules
-          key: v1-dependencies-{{ checksum "package-lock.json" }}
-      - run: npm run build
-      - run: npm run test:lint
-      - run: npm run test:prettier
-
-  integration:
-    machine:
-      # We can't use a containerized environment since it requires remote docker to start custom containers.
-      # However, we can't access the remote docker's network from the primary container. This is a
-      # feature, as documented in https://circleci.com/docs/2.0/building-docker-images/#separation-of-environments
-      # As a consequence, we cannot use the circleci CLI for this job because "You cannot use the machine
-      # executor in local jobs." (https://circleci.com/docs/2.0/local-cli/#limitations-of-running-jobs-locally)
-      #
-      # Available images: https://circleci.com/docs/2.0/configuration-reference/#available-machine-images
-      image: ubuntu-2004:2024.01.1
-    working_directory: ~/ibc/tests
-    steps:
-      - checkout:
-          path: ~/ibc
-      - run:
-          # TODO: check if still needed with 20.04
-          # The images ubuntu-1604 comes with preinstalled nvm, which does not work well with non-login shells
-          # We do this before running other scripts in parallel to avoid trouble when starting bash sessions.
-          name: Uninstall nvm
-          # Moving to trash is faster than deleting (gvfs-trash is not installed on this image)
-          command: mkdir -p ~/.local/share/Trash && mv "$NVM_DIR" ~/.npm ~/.local/share/Trash
-      - run: # start early for less wait time below
-          name: Start wasmd
-          command: ../ci-scripts/wasmd/start.sh
-          background: true
-      - run: # start early for less wait time below
-          name: Start nois
-          command: ../ci-scripts/nois/start.sh
-          background: true
-      - run:
-          name: Install nodejs
-          # In the current image, `sudo apt install nodejs` requires `sudo apt update` which is too slow
-          command: |
-            curl -sL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-            sudo apt-get install -y nodejs
-      - run:
-          name: Version information
-          command: echo "node $(node --version)"; echo "npm $(npm --version)"
-      - restore_cache:
-          name: Restore Npm Package Cache
-          keys:
-            - v1-packages-{{ checksum "package-lock.json" }}
-      - run: npm install --frozen-lockfile
-      - run:
-          name: Wait for chains to start up
-          command: |
-            echo "Wait for wasmd..."
-            timeout 60 bash -c "until curl -s http://localhost:26659/status > /dev/null; do sleep 0.5; done"
-            echo "Wait for nois..."
-            timeout 60 bash -c "until curl -s http://localhost:26655/status > /dev/null; do sleep 0.5; done"
-            sleep 1
-            echo "Chains up and running!"
-      - attach_workspace:
-          at: internal
-      - run:
-          command: ls -l internal
-      - run:
-          command: npm run build
-      - run:
-          command: npm run test:unit
-      - save_cache:
-          name: Save Npm Package Cache
-          key: v1-packages-{{ checksum "package-lock.json" }}
-          paths:
-            - node_modules
-      - run:
-          name: Stop chains
-          command: |
-            ../ci-scripts/wasmd/stop.sh
-            ../ci-scripts/nois/stop.sh
-
+          key: v2-check-wasm-rust:1.81.0-{{ checksum "~/project/Cargo.lock" }}
 
   # This job roughly follows the instructions from https://circleci.com/blog/publishing-to-github-releases-via-circleci/
   build_and_upload_contracts:
@@ -666,7 +201,7 @@ jobs:
       - run:
           name: Build development contracts
           command: |
-            docker run --volumes-from with_code cosmwasm/optimizer:0.15.1
+            docker run --volumes-from with_code cosmwasm/optimizer:0.16.0
             docker cp with_code:/code/artifacts ./artifacts
       - run:
           name: Show data
@@ -688,7 +223,7 @@ jobs:
 
   build_and_upload_schemas:
     docker:
-      - image: rust:1.75.0
+      - image: rust:1.81.0
     working_directory: ~/project
     steps:
       - checkout:
